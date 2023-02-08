@@ -1,0 +1,110 @@
+<body>
+    <script>
+
+        class Note {
+            isComplete = false;
+
+            constructor(title, text) {
+                this.title = title;
+                this.text = text;
+
+            }
+
+            editNote(newtext) {
+                this.text = newtext;
+            }
+
+            markAsComplete() {
+                this.isComplete = true;
+            }            
+
+        }
+
+
+        class List {
+            notes = [];
+
+            add (title, text) {
+                
+                if (this.checkUniq(title)) {
+                    this.notes.push(new Note(title, text))
+                }
+                localStorage.setItem('notes', JSON.stringify(this.notes));
+            }
+
+
+            remove(title) {
+                const index = this.notes.findIndex(note => note.title === title);
+                const confirm = this.#confirmation();
+                if (!confirm) return;
+                this.notes.splice(index, 1);
+                localStorage.setItem('notes', JSON.stringify(this.notes));
+            }
+
+            edit(title, newtext) {
+                const index = this.notes.findIndex(note => note.title === title);
+
+                const confirm = this.#confirmation();
+                if (!confirm) return;
+                this.notes[index].editNote(newtext);  
+                localStorage.setItem('notes', JSON.stringify(this.notes));                           
+            }
+
+
+            info() {
+                return this.notes.reduce((info, note) => {
+                    if (!info.total) {
+                        info.total = this.notes.length;
+                    }
+
+                    if (!info[note.completed]) {
+                        info[note.completed] = 0;
+                    }
+
+                    info[note.completed]++;
+                    return info;
+                }, {})
+            }
+
+
+            checkUniq(title) {
+                return !this.notes.find(note => note.title === title);
+            }
+
+            #confirmation() {
+
+                return confirm('Are u sure?');
+
+            }
+
+            toggle(title) {
+                this.notes.forEach(note => {
+                    if (note.title === title) {
+                        note.completed = !note.completed
+                    }
+                })
+            } 
+
+        }
+
+
+
+        const myNote = new List();
+
+        myNote.add('Swim', 'Swim 2 km this morning');
+        myNote.add('Eat', 'Eat 2 kg of meat');
+        myNote.add('Buy', 'Buy 2 kg of meat');
+
+        myNote.edit("Eat", 'Eat 2 kilo of sousages')
+
+        myNote.toggle('Swim')
+
+        myNote.remove('Buy')
+
+        console.log(myNote.info());
+        console.log(myNote.notes);
+
+
+
+    </script>
+</body>
