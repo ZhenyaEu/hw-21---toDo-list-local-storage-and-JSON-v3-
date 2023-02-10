@@ -2,7 +2,7 @@
     <script>
 
         class Note {
-            isComplete = false;
+            completed = false;
 
             constructor(title, text) {
                 this.title = title;
@@ -14,9 +14,9 @@
                 this.text = newtext;
             }
 
-            markAsComplete() {
+            /*markAsComplete() {
                 this.isComplete = true;
-            }            
+            }*/
 
         }
 
@@ -24,12 +24,14 @@
         class List {
             notes = [];
 
-            add (title, text) {
-                
+            
+
+            add(title, text) {
+
                 if (this.checkUniq(title)) {
                     this.notes.push(new Note(title, text))
                 }
-                localStorage.setItem('notes', JSON.stringify(this.notes));
+                Storage.setToStorage(this.notes);
             }
 
 
@@ -38,7 +40,7 @@
                 const confirm = this.#confirmation();
                 if (!confirm) return;
                 this.notes.splice(index, 1);
-                localStorage.setItem('notes', JSON.stringify(this.notes));
+                Storage.setToStorage(this.notes);
             }
 
             edit(title, newtext) {
@@ -46,8 +48,8 @@
 
                 const confirm = this.#confirmation();
                 if (!confirm) return;
-                this.notes[index].editNote(newtext);  
-                localStorage.setItem('notes', JSON.stringify(this.notes));                           
+                this.notes[index].editNote(newtext);
+                Storage.setToStorage(this.notes);
             }
 
 
@@ -83,9 +85,45 @@
                         note.completed = !note.completed
                     }
                 })
-            } 
+                Storage.setToStorage(this.notes);
+            }
+
+            showList(item, callback) {
+                Storage.getFromStorage(item, callback);
+            }
 
         }
+
+        class Storage {
+            static setToStorage(name) {
+                localStorage.setItem('notes', JSON.stringify(name));
+            }
+
+            static getFromStorage(item, callback) {
+                
+                if (localStorage.length) {
+                    callback(JSON.parse(localStorage.getItem(item)));
+                } else {
+                    throw new Error('Error')
+                }
+            }
+        }
+
+
+        function showList() {
+            if (localStorage.length) {
+                let values = Object.values(localStorage);
+
+                values.forEach((item, index) => {
+                    
+                    console.log(localStorage.key(index), (JSON.parse(item)));
+                })
+            } else {
+                throw new Error('Error')
+            }
+
+        }
+
 
 
 
@@ -104,6 +142,9 @@
         console.log(myNote.info());
         console.log(myNote.notes);
 
+        myNote.showList('notes', console.log);
+
+        
 
 
     </script>
