@@ -1,147 +1,99 @@
 <body>
     <script>
-
         class Note {
-            completed = false;
+            
 
-            constructor(title, text) {
-                this.title = title;
+            constructor(text, isCompleteted) {
                 this.text = text;
-
+                this.isCompleteted = isCompleteted || false;
             }
 
-            editNote(newtext) {
-                this.text = newtext;
+            edit(text) {
+                this.text = text;
             }
 
-            
-
-        }
-
-
-        class List {
-            notes = [];
-
-            
-
-            add(title, text) {
-
-                if (this.checkUniq(title)) {
-                    this.notes.push(new Note(title, text))
-                }
-                Storage.setToStorage(this.notes);
-            }
-
-
-            remove(title) {
-                const index = this.notes.findIndex(note => note.title === title);
-                const confirm = this.#confirmation();
-                if (!confirm) return;
-                this.notes.splice(index, 1);
-                Storage.setToStorage(this.notes);
-            }
-
-            edit(title, newtext) {
-                const index = this.notes.findIndex(note => note.title === title);
-
-                const confirm = this.#confirmation();
-                if (!confirm) return;
-                this.notes[index].editNote(newtext);
-                Storage.setToStorage(this.notes);
-            }
-
-
-            info() {
-                return this.notes.reduce((info, note) => {
-                    if (!info.total) {
-                        info.total = this.notes.length;
-                    }
-
-                    if (!info[note.completed]) {
-                        info[note.completed] = 0;
-                    }
-
-                    info[note.completed]++;
-                    return info;
-                }, {})
-            }
-
-
-            checkUniq(title) {
-                return !this.notes.find(note => note.title === title);
-            }
-
-            #confirmation() {
-
-                return confirm('Are u sure?');
-
-            }
-
-            toggle(title) {
-                this.notes.forEach(note => {
-                    if (note.title === title) {
-                        note.completed = !note.completed
-                    }
-                })
-                Storage.setToStorage(this.notes);
-            }
-
-            showList(item, callback) {
-                Storage.getFromStorage(item, callback);
+            markAsCompleted() {
+                this.isCompleteted = true;
             }
 
         }
 
-        class Storage {
-            static setToStorage(name) {
-                localStorage.setItem('notes', JSON.stringify(name));
-            }
-
-            static getFromStorage(item, callback) {
+        class TodoList {        
+            #name;  
+            #storage; 
+            constructor(name, storage) {
+                this.#storage = new storage(name);                  
+                this.#name = name;
+                this.list = this.#initList();
                 
-                if (localStorage.length) {
-                    callback(JSON.parse(localStorage.getItem(item)));
-                } else {
-                    throw new Error('Error')
-                }
+            }
+
+            add(text) {
+                this.list.push(new Note(text));
+                this.#save();
+            }
+
+            remove(index) {
+                this.list.splice(index, 1);
+                this.#save();
+            }
+
+            edit(index, text) {
+                this.list[index].edit(text);
+                this.#save();
+            }
+
+            completeNote(index) {
+                this.list[index].markAsCompleted();
+                this.#save();
+            }
+
+            get statistic() {
+                const completed = this.list.filter(({ isCompleteted }) => isCompleteted).length;
+                const total = this.list.length;
+
+                return { total, completed}
+            }
+
+            #save() {  
+                this.#storage.set(this.list);
+            }
+
+            #initList() { 
+                return this.#storage.get().map(({name, isCompleteted}) => new Note(name, isCompleteted));
             }
         }
 
 
-        function showList() {
-            if (localStorage.length) {
-                let values = Object.values(localStorage);
-
-                values.forEach((item, index) => {
-                    
-                    console.log(localStorage.key(index), (JSON.parse(item)));
-                })
-            } else {
-                throw new Error('Error')
+        class Storage {           
+            constructor(name) {
+                this.name = name;
             }
+            get(id) {
+                throw new Error('Should be overwritten')
+            }
+            set(data) {
+                throw new Error('Should be overwritten')
+            }
+        }
+
+        class StorageLocal extends Storage {
+            get() {
+                const data = localStorage.getItem(this.name);
+
+                return data ? JSON.parse(data) : [];
+            }
+
+            set(data) {
+                localStorage.setItem(this.name, JSON.stringify(data));
+            } 
 
         }
 
+        
 
 
-
-        const myNote = new List();
-
-        myNote.add('Swim', 'Swim 2 km this morning');
-        myNote.add('Eat', 'Eat 2 kg of meat');
-        myNote.add('Buy', 'Buy 2 kg of meat');
-
-        myNote.edit("Eat", 'Eat 2 kilo of sousages')
-
-        myNote.toggle('Swim')
-
-        myNote.remove('Buy')
-
-        console.log(myNote.info());
-        console.log(myNote.notes);
-
-        myNote.showList('notes', console.log);
-
+        const todo = new TodoList('todo', StorageLocal);   
         
 
 
